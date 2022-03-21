@@ -1,0 +1,112 @@
+// стили сетки календаря и заголовка календаря с днями недели
+.calendar {
+  &__header {
+    display: flex;
+    justify-content: space-around;
+    padding: 0 0 0 60px;
+    border-bottom: 1px solid #dfe0e4;
+  }
+
+  &__body {
+    height: calc(100vh - 174px);
+    overflow-y: scroll;
+  }
+
+  .day-label__day-name {
+    text-transform: uppercase;
+    font-size: 14px;
+  }
+
+  .day-label__day-number {
+    font-size: 25px;
+    border-radius: 50%;
+    color: #3c4043;
+    padding: 12px;
+    width: 55px;
+    height: 55px;
+    line-height: 32px;
+    margin: 5px auto 0 auto;
+  }
+
+  &__day {
+    width: 100%;
+    position: relative;
+
+    &-label {
+      display: flex;
+      flex-direction: column;
+      text-align: center;
+      width: 100%;
+      padding: 20px 0 10px 0;
+      position: relative;
+      &:first-child:before {
+        position: absolute;
+        left: 0;
+        bottom: 0;
+        height: 25px;
+        content: "";
+        width: 1px;
+        background-color: #dfe0e4;
+      }
+      &:after {
+        position: absolute;
+        right: -1px;
+        bottom: 0;
+        height: 25px;
+        content: "";
+        width: 1px;
+        background-color: #dfe0e4;
+      }
+    }
+
+    &-active {
+      .day-label__day-name {
+        color: #1a73e8;
+      }
+
+      .day-label__day-number {
+        background-color: #1a73e8;
+        color: #fff;
+      }
+    }
+
+    &-prev {
+      .day-label__day-name {
+        color: #999;
+      }
+
+      .day-label__day-number {
+        color: #999;
+      }
+    }
+
+    &-prev {
+      .day-label__day-name {
+        color: #3c4043;
+      }
+
+      .day-label__day-number {
+        color: #3c4043;
+      }
+    }
+  }
+
+  &__week {
+    display: flex;
+    justify-content: space-around;
+    flex: 1;
+    position: relative;
+    &-container {
+      display: flex;
+    }
+  }
+
+  &__time-slot {
+    border-left: 1px solid #dfe0e4;
+    height: 60px;
+    position: relative;
+    &:not(:last-child) {
+      border-bottom: 1px solid #dfe0e4;
+    }
+  }
+}

@@ -1,0 +1,31 @@
+// стили формы события внутри модального окна
+.event-form {
+  &__field {
+    width: 100%;
+    border-radius: 4px;
+    border: 1px solid #dadce0;
+    margin-bottom: 10px;
+    padding: 5px 10px;
+  }
+  &__time {
+    margin-bottom: 10px;
+  }
+  select {
+    border: 1px solid #dadce0;
+    border-radius: 4px;
+    padding: 5px 10px;
+  }
+  &__buttons {
+    display: flex;
+    justify-content: space-between;
+  }
+  &__submit-btn {
+    background-color: #1a73e8;
+    border-color: #1a73e8;
+    color: #fff;
+    &:hover {
+      border-color: #2e7eea;
+      background-color: #2e7eea;
+    }
+  }
+}

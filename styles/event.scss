@@ -1,0 +1,22 @@
+// стили отображаемого в календаре события
+
+.event {
+  position: absolute;
+  left: 0;
+  width: 90%;
+  background-color: #6495ed;
+  color: #fff;
+  padding: 8px;
+  border-radius: 8px;
+  z-index: 5;
+  font-size: 14px;
+
+  &__past {
+    background-color: #92b4f5;
+  }
+
+  &__time-small {
+    font-size: 12px;
+    margin-top: -6px;
+  }
+}
