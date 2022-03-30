@@ -1,8 +1,10 @@
-import { getItem, setItem } from "../common/storage.js";
+import { getItem } from "../common/storage.js";
 import { generateWeekRange } from "../common/time.utils.js";
 import { renderEvents } from "../events/events.js";
 import { createNumbersArray } from "../common/createNumbersArray.js";
 import { openModal } from "../common/modal.js";
+
+const calendarWeek = document.querySelector(".calendar__week");
 
 const generateDay = () => {
   // функция должна сгенерировать и вернуть разметку дня в виде строки
@@ -32,10 +34,9 @@ export const renderWeek = () => {
   const weekRange = generateWeekRange(getItem("displayedWeekStart"));
   const currentDay = new Date().getDate();
 
-  const calendarWeek = document.querySelector(".calendar__week");
   calendarWeek.innerHTML = generateWeekRange(
     getItem("displayedWeekStart")
-  ).reduce((prev, acc, index) => {
+  ).reduce((acc, _, index) => {
     const calendarDay = document.createElement("div");
     calendarDay.className = "calendar__day";
     calendarDay.dataset.day = weekRange[index].getDate();
@@ -44,8 +45,8 @@ export const renderWeek = () => {
       calendarDay.dataset.currentDay = true;
 
     calendarDay.innerHTML = generateDay();
-    return (prev += calendarDay.outerHTML);
-  }, "");
+    return (acc += calendarDay.outerHTML);
+  }, '');
 
   renderTimeLine();
   renderEvents();
@@ -60,72 +61,70 @@ const renderTimeLine = () => {
   if (currentTimeline) currentTimeline.remove();
   if (currentDayColumn)
     currentDayColumn.innerHTML =
-      `<div class="current-timeline" style="top: ${
-        currentMinutes - 1
+      `<div class="current-timeline" style="top: ${currentMinutes - 1
       }px;"></div>` + currentDayColumn.innerHTML;
-
-  setClickEventToSlot();
 };
 
-const setClickEventToSlot = () => {
-  const calendarTimeSlots = document.querySelectorAll(".calendar__time-slot");
-  [...calendarTimeSlots].map((slot) =>
-    slot.addEventListener("click", (event) => {
-      if (!slot.querySelector(".event")) {
-        const slotDate = moment(getItem("displayedWeekStart"));
-        slotDate.set(
-          "date",
-          event.target.closest(".calendar__day").dataset.day
-        );
-        slotDate.set("hour", event.target.dataset.time);
-
-        switch (true) {
-          case event.offsetY >= 45:
-            slotDate.set("minutes", 45);
-            break;
-
-          case event.offsetY >= 30 && event.offsetY < 45:
-            slotDate.set("minutes", 30);
-            break;
-
-          case event.offsetY >= 15 && event.offsetY < 30:
-            slotDate.set("minutes", 15);
-            break;
-
-          default:
-            slotDate.set("minutes", "00");
-            break;
-        }
-
-        setItem("slotDate", slotDate.format("YYYY-MM-DD HH:mm"));
-        openModal();
-      } else {
-        const eventObj = getItem("events").find(
-          ({ id }) => id === +event.target.dataset.eventId
-        );
-        if (eventObj) {
-          setItem("slotDate", eventObj.start);
-          setItem("currentEventId", eventObj.id);
-        }
-      }
-    })
+const onClickSlot = (event) => {
+  const calendarDays = document.querySelectorAll(".calendar__day");
+  const slotDate = moment(getItem("displayedWeekStart"))
+    .add([...calendarDays]
+      .indexOf(event.target.closest(".calendar__day")), 'days');
+  slotDate.set(
+    "date",
+    event.target.closest(".calendar__day").dataset.day
   );
+  slotDate.set("hour", event.target.dataset.time);
+
+  switch (true) {
+    case event.offsetY >= 45:
+      slotDate.set("minutes", 45);
+      break;
+
+    case event.offsetY >= 30 && event.offsetY < 45:
+      slotDate.set("minutes", 30);
+      break;
+
+    case event.offsetY >= 15 && event.offsetY < 30:
+      slotDate.set("minutes", 15);
+      break;
+
+    default:
+      slotDate.set("minutes", "00");
+      break;
+  }
+  event.target.dataset.slotDate = slotDate.format("YYYY-MM-DD HH:mm")
+  openModal();
 };
 
 const setPastEvents = () => {
-  const events = getItem("events");
+  const events = document.querySelectorAll('.event');
   events.forEach((event) => {
-    if (moment(event.end) < moment()) {
-      document
-        .querySelector(`.event[data-event-id="${event.id}"]`)
-        .classList.add("event__past");
+    const calendarDays = document.querySelectorAll(".calendar__day");
+    const [_, end] = event.querySelector('.event__time').textContent.split(' - ');
+    const day = moment(getItem("displayedWeekStart"))
+      .add([...calendarDays].indexOf(event.closest(".calendar__day")), 'days');
+    day.set('hours', end.split(':')[0]);
+    day.set('minutes', end.split(':')[1]);
+    if (day < moment()) {
+      const eventEl = document
+        .querySelector(`.event[data-event-id="${event.id}"]`);
+      if (eventEl) eventEl.classList.add("event__past");
     }
   });
 };
 
-setInterval(() => {
-  if (new Date().getSeconds() == 0) {
-    renderTimeLine();
-    setPastEvents();
-  }
-}, 1000);
+export const updateEveryMinute = () => {
+  setInterval(() => {
+    if (new Date().getSeconds() == 0) {
+      renderTimeLine();
+      setPastEvents();
+    }
+  }, 1000);
+}
+
+const checkTargetClick = (e) => {
+  if (e.target.classList.contains('calendar__time-slot')) onClickSlot(e);
+}
+
+calendarWeek.addEventListener('click', (e) => checkTargetClick(e));

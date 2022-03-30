@@ -3,8 +3,6 @@ import { renderWeek } from "../calendar/calendar.js";
 import { renderHeader } from "../calendar/header.js";
 import { getStartOfWeek, getDisplayedMonth } from "../common/time.utils.js";
 
-const navButtons = document.querySelectorAll(".navigation button");
-
 function renderCurrentMonth() {
   // отрисовать месяц, к которому относиться текущая неделя (getDisplayedMonth)
   // вставить в .navigation__displayed-month
@@ -18,14 +16,15 @@ function renderCurrentMonth() {
 
 const onChangeWeek = (event) => {
   const currentButton = event.target.closest("button");
+  const displayedWeekStart = getItem("displayedWeekStart");
 
   switch (currentButton.dataset.direction) {
     case "prev":
       setItem(
         "displayedWeekStart",
         new Date(
-          getItem("displayedWeekStart").setDate(
-            getItem("displayedWeekStart").getDate() - 7
+          displayedWeekStart.setDate(
+            displayedWeekStart.getDate() - 7
           )
         )
       );
@@ -35,8 +34,8 @@ const onChangeWeek = (event) => {
       setItem(
         "displayedWeekStart",
         new Date(
-          getItem("displayedWeekStart").setDate(
-            getItem("displayedWeekStart").getDate() + 7
+          displayedWeekStart.setDate(
+            displayedWeekStart.getDate() + 7
           )
         )
       );
@@ -57,5 +56,7 @@ const onChangeWeek = (event) => {
 
 export const initNavigation = () => {
   renderCurrentMonth();
+
+  const navButtons = document.querySelectorAll(".navigation button");
   [...navButtons].map((btn) => btn.addEventListener("click", onChangeWeek));
 };

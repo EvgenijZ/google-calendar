@@ -22,8 +22,8 @@ export const renderHeader = () => {
       moment(day).format("DD.MM.YYYY") < todayDate.format("DD.MM.YYYY")
         ? " calendar__day-prev"
         : moment(day).format("DD.MM.YYYY") > todayDate.format("DD.MM.YYYY")
-        ? " calendar__day-next"
-        : " calendar__day-active";
+          ? " calendar__day-next"
+          : " calendar__day-active";
 
     weekHtml += `<div class="${dayClasses}">
       <span class="day-label__day-name">${daysOfWeek[day.getDay()]}</span>

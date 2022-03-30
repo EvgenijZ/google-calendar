@@ -1,10 +1,11 @@
 import { renderTimescale } from "./calendar/timescale.js";
-import { renderWeek } from "./calendar/calendar.js";
+import { renderWeek, updateEveryMinute } from "./calendar/calendar.js";
 import { renderHeader } from "./calendar/header.js";
 import { initNavigation } from "./header/navigation.js";
 import { setItem } from "./common/storage.js";
 import { getStartOfWeek } from "./common/time.utils.js";
 import { initEventForm } from "./events/createEvent.js";
+import { initSelectHoursForModal } from "./common/form.js";
 
 document.addEventListener("DOMContentLoaded", () => {
   // инициализация всех элементов
@@ -14,4 +15,6 @@ document.addEventListener("DOMContentLoaded", () => {
   renderHeader();
   initNavigation();
   initEventForm();
+  initSelectHoursForModal();
+  updateEveryMinute();
 });

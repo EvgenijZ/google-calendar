@@ -1,60 +1,33 @@
-import { getItem, setItem } from "../common/storage.js";
-import { renderEvents } from "./events.js";
+import { getCurrentEventId, addEventToList } from "./events.js";
 import { closeModal } from "../common/modal.js";
+import { getEvents, createEvent, updateEvent } from "./eventGateway.js";
 
 const eventFormElem = document.querySelector(".event-form");
-const closeEventFormBtn = document.querySelector(".create-event__close-btn");
 
-function clearEventForm() {
-  // ф-ция должна очистить поля формы от значений
-  eventFormElem.reset();
-  clearSlotDate();
-}
+const clearEventForm = () => eventFormElem.reset();
+const onCloseEventForm = () => [closeModal(), clearEventForm()];
+const validateDataEvent = async (obj) => {
 
-function onCloseEventForm() {
-  // здесь нужно закрыть модальное окно и очистить форму
-  closeModal();
-  clearEventForm();
-}
-
-const clearSlotDate = () => {
-  setItem("slotDate", null);
-};
-
-const validateDataEvent = (obj) => {
-  const start = moment(
-    `${obj.date} ${obj.startTimeHours}:${obj.startTimeMinutes}`
-  );
-  const end = moment(`${obj.date} ${obj.endTimeHours}:${obj.endTimeMinutes}`);
+  const [start, end] = prepareDate(obj);
   const errors = [];
-  const events = getItem("events");
   const filteredEvents = [];
 
-  events.forEach((event) => {
-    checkStartObjBetween(event, start, filteredEvents);
-    checkStartEventBetween(event, start, end, filteredEvents);
-    checkEqualStart(event, start, filteredEvents);
-    checkCurrentId(event, filteredEvents);
+  await getEvents().then(events => {
+
+    events.forEach((event) => {
+      checkStartObjBetween(event, start, filteredEvents);
+      checkStartEventBetween(event, start, end, filteredEvents);
+      checkEqualStart(event, start, filteredEvents);
+      checkCurrentId(event, filteredEvents);
+    });
+
+    if (filteredEvents.length) errors.push("Два события не могут пересекаться по времени");
+    if (moment(start) > moment(end) || moment(start).unix() === moment(end).unix()) errors.push("Неккоретный диапазон события");
+    if (moment(end).diff(moment(start), "hours") > 6) errors.push("Cобытие не может быть дольше 6 часов");
+
   });
 
-  if (filteredEvents.length) {
-    errors.push("Два события не могут пересекаться по времени");
-  }
-
-  if (start > end || start.unix() === end.unix()) {
-    errors.push("Неккоретный диапазон события");
-  }
-
-  if (end.diff(start, "hours") > 6) {
-    errors.push("Cобытие не может быть дольше 6 часов");
-  }
-
-  if (errors.length) {
-    alert(JSON.stringify(errors.join(", ")));
-    return false;
-  }
-
-  return true;
+  return errors.length ? { errors: JSON.stringify(errors.join(", ")) } : { success: true };
 };
 
 function onCreateEvent(event) {
@@ -72,87 +45,111 @@ function onCreateEvent(event) {
 
   const formData = new FormData(eventFormElem);
   const formObj = Object.fromEntries(formData);
-  const currentEventId = getItem("currentEventId");
 
-  if (!validateDataEvent(formObj)) return;
+  validateDataEvent(formObj).then(result => {
+    if (result.errors) throw new Error(result.errors);
 
-  if (currentEventId) {
-    const newEvents = getItem("events");
-    const startTime = moment(
-      `${formObj.date} ${formObj.startTimeHours}:${formObj.startTimeMinutes}`
-    );
-    const endTime = moment(
-      `${formObj.date} ${formObj.endTimeHours}:${formObj.endTimeMinutes}`
-    );
+    const [start, end] = prepareDate(formObj);
+    formObj.start = start;
+    formObj.end = end;
 
-    newEvents.map((e) => {
-      if (e.id === +currentEventId) {
-        e.start = startTime.format("YYYY-MM-DD HH:mm");
-        e.end = endTime.format("YYYY-MM-DD HH:mm");
-        e.title = formObj.title;
-        e.description = formObj.description;
-      }
-      return e;
-    });
+    return formObj;
 
-    setItem("events", newEvents);
-  } else {
-    const events = getItem("events");
-    updateEventObj(formObj);
-    events.push(formObj);
-    setItem("events", []);
-    setItem("events", events);
-  }
+  }).then(obj => updateEventObj(obj))
+    .then(obj => createEvent(obj))
+    .then(event => {
+      if (!event) return;
+      onCloseEventForm();
+      addEventToList(event);
+    }).catch(error => alert(error));
+}
 
-  onCloseEventForm();
-  renderEvents();
+const onUpdateEvent = (event) => {
+  event.preventDefault();
+
+  const formData = new FormData(eventFormElem);
+  const formObj = Object.fromEntries(formData);
+
+  validateDataEvent(formObj).then(result => {
+    if (result.errors) throw new Error(result.errors);
+
+    updateEventItem(formObj);
+    return formObj;
+  }).then(event => updateEvent(event)).then((event) => {
+    if (!event) return;
+    onCloseEventForm();
+    addEventToList(event);
+  }).catch(error => alert(error));
+}
+
+const checkCreateOrUpdateEvent = (event) => {
+  event.preventDefault();
+  return getCurrentEventId()
+    ? onUpdateEvent(event) : onCreateEvent(event);
+}
+
+const updateEventItem = (event) => {
+  if (!event) return;
+
+  const [start, end] = prepareDate(event);
+
+  event.id = getCurrentEventId();
+  event.start = start;
+  event.end = end;
+
+  updateEventObj(event);
+
+  return event;
+}
+
+const prepareDate = (obj, format = 'YYYY-MM-DD HH:mm') => {
+  const start = moment(
+    `${obj.date} ${obj.startTimeHours}:${obj.startTimeMinutes}`
+  ).format(format);
+  const end = moment(`${obj.date} ${obj.endTimeHours}:${obj.endTimeMinutes}`)
+    .format(format);
+  return [start, end];
 }
 
 const updateEventObj = (formObj) => {
   const allowedObjFields = ["id", "title", "description", "start", "end"];
-
-  formObj.id = Date.now();
-  formObj.start = moment(
-    `${formObj.date} ${formObj.startTimeHours}:${formObj.startTimeMinutes}`
-  ).format("YYYY-MM-DD HH:mm");
-  formObj.end = moment(
-    `${formObj.date} ${formObj.endTimeHours}:${formObj.endTimeMinutes}`
-  ).format("YYYY-MM-DD HH:mm");
-
   Object.keys(formObj).forEach((k) => {
     if (!allowedObjFields.includes(k)) delete formObj[k];
   });
+  return formObj;
 };
 
-const checkStartObjBetween = (a, start, filteredEvents) =>
-  moment(start.format("YYYY-MM-DD HH:mm")).isBetween(
-    moment(a.start).format("YYYY-MM-DD HH:mm"),
-    moment(a.end).format("YYYY-MM-DD HH:mm")
+
+const checkStartObjBetween = (event, start, filteredEvents) =>
+  moment(start).isBetween(
+    moment(event.start).format("YYYY-MM-DD HH:mm"),
+    moment(event.end).format("YYYY-MM-DD HH:mm")
   )
-    ? filteredEvents.push(a)
+    ? filteredEvents.push(event)
     : false;
 
-const checkStartEventBetween = (a, start, end, filteredEvents) =>
-  moment(moment(a.start).format("YYYY-MM-DD HH:mm")).isBetween(
-    start.format("YYYY-MM-DD HH:mm"),
-    end.format("YYYY-MM-DD HH:mm")
+const checkStartEventBetween = (event, start, end, filteredEvents) =>
+  moment(moment(event.start).format("YYYY-MM-DD HH:mm")).isBetween(
+    start, end
   )
-    ? filteredEvents.push(a, start, end, filteredEvents)
+    ? filteredEvents.push(event)
     : false;
 
-const checkEqualStart = (a, start, filteredEvents) =>
-  moment(a.start).format("YYYY-MM-DD HH:mm") == start.format("YYYY-MM-DD HH:mm")
-    ? filteredEvents.push(a)
+const checkEqualStart = (event, start, filteredEvents) =>
+  moment(event.start).format("YYYY-MM-DD HH:mm") == start
+    ? filteredEvents.push(event)
     : false;
 
-const checkCurrentId = (a, filteredEvents) => {
-  if (a.id == getItem("currentEventId")) filteredEvents.splice(a, 1);
+const checkCurrentId = (event, filteredEvents) => {
+  if (event.id == getCurrentEventId()) filteredEvents.splice(event, 1);
   return filteredEvents;
 };
 
 export function initEventForm() {
   // подпишитесь на сабмит формы и на закрытие формы
 
-  eventFormElem.addEventListener("submit", onCreateEvent);
+  eventFormElem.addEventListener("submit", checkCreateOrUpdateEvent);
+
+  const closeEventFormBtn = document.querySelector(".create-event__close-btn");
   closeEventFormBtn.addEventListener("click", onCloseEventForm);
 }
