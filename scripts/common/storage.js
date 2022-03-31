@@ -1,6 +1,6 @@
 let storage = {
   // хранит дату понедельника той отображаемой недели
-  displayedWeekStart: null
+  displayedWeekStart: null,
 };
 
 export const setItem = (key, value) => {

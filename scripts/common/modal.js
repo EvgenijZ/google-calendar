@@ -1,5 +1,5 @@
-import { prepareInputsForModal } from './form.js';
-import { clearCurrentEventElemAndSlot } from '../events/events.js';
+import { prepareInputsForModal } from "./form.js";
+import { clearCurrentEventElemAndSlot } from "../events/events.js";
 
 const modalElem = document.querySelector(".modal");
 const createEventCloseBtn = document.querySelector(".create-event__close-btn");

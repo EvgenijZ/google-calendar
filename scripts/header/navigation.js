@@ -22,22 +22,14 @@ const onChangeWeek = (event) => {
     case "prev":
       setItem(
         "displayedWeekStart",
-        new Date(
-          displayedWeekStart.setDate(
-            displayedWeekStart.getDate() - 7
-          )
-        )
+        new Date(displayedWeekStart.setDate(displayedWeekStart.getDate() - 7))
       );
       break;
 
     case "next":
       setItem(
         "displayedWeekStart",
-        new Date(
-          displayedWeekStart.setDate(
-            displayedWeekStart.getDate() + 7
-          )
-        )
+        new Date(displayedWeekStart.setDate(displayedWeekStart.getDate() + 7))
       );
       break;
 

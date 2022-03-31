@@ -15,29 +15,26 @@ async function handleEventClick(event) {
   const diffPositionClickHeight = window.innerHeight - event.pageY;
   const marginClickWidth = 150;
   const marginClickHeight = 125;
-  const top = diffPositionClickWidth >= marginClickWidth
-    ? event.pageX
-    : window.innerWidth - marginClickWidth;
-  const left = diffPositionClickHeight >= marginClickHeight
-    ? event.pageY
-    : window.innerHeight - marginClickHeight;
+  const top =
+    diffPositionClickWidth >= marginClickWidth
+      ? event.pageX
+      : window.innerWidth - marginClickWidth;
+  const left =
+    diffPositionClickHeight >= marginClickHeight
+      ? event.pageY
+      : window.innerHeight - marginClickHeight;
 
   openPopup(top, left);
 }
 
-const removeEventsFromCalendar = () => document.querySelectorAll(".event").forEach((el) => el.remove());
+const removeEventsFromCalendar = () =>
+  document.querySelectorAll(".event").forEach((el) => el.remove());
 
 export const createEventElement = (event) => {
   // ф-ция создает DOM элемент события
   // событие должно позиционироваться абсолютно внутри нужной ячейки времени внутри дня
   // нужно добавить id события в дата атрибут
   // здесь для создания DOM элемента события используйте document.createElement
-
-
-
-
-
-
 
   /////ПЕРЕДЕЛАТЬ НА cREATEeLEMENT
 
@@ -55,15 +52,20 @@ export const createEventElement = (event) => {
     event.title &&
     moment(event.end).diff(moment(event.start), "minutes") > 30
   ) {
-    const eventTitle = document.createElement('div');
-    eventTitle.className = 'event-title';
+    const eventTitle = document.createElement("div");
+    eventTitle.className = "event-title";
     eventTitle.textContent = event.title;
     eventElement.append(eventTitle);
   }
 
-  const eventTime = document.createElement('div');
-  eventTime.className = moment(event.end).diff(moment(event.start), "minutes") == 15 ? 'event__time event__time-small' : 'event__time';
-  eventTime.textContent = `${moment(event.start).format("HH:mm")} - ${moment(event.end).format("HH:mm")}`;
+  const eventTime = document.createElement("div");
+  eventTime.className =
+    moment(event.end).diff(moment(event.start), "minutes") == 15
+      ? "event__time event__time-small"
+      : "event__time";
+  eventTime.textContent = `${moment(event.start).format("HH:mm")} - ${moment(
+    event.end
+  ).format("HH:mm")}`;
   eventElement.append(eventTime);
 
   return eventElement;
@@ -82,13 +84,19 @@ export const renderEvents = () => {
 
   const currentWeekDate = getItem("displayedWeekStart");
 
-  getEvents().then(data => {
-    if (!data) return;
-    data.filter((event) => moment(event.start).date() >= moment(currentWeekDate).date() ||
-      moment(event.start).date() <= moment(currentWeekDate).add(6, 'days').date()
-    ).map((event) => addEventToList(event));
-  }
-  ).catch(error => alert(error));
+  getEvents()
+    .then((data) => {
+      if (!data) return;
+      data
+        .filter(
+          (event) =>
+            moment(event.start).date() >= moment(currentWeekDate).date() ||
+            moment(event.start).date() <=
+              moment(currentWeekDate).add(6, "days").date()
+        )
+        .map((event) => addEventToList(event));
+    })
+    .catch((error) => alert(error));
 };
 
 export const addEventToList = (event) => {
@@ -108,7 +116,7 @@ export const addEventToList = (event) => {
     );
     currentTimeSlot.append(createEventElement(event));
   }
-}
+};
 
 function onDeleteEvent() {
   // достаем из storage массив событий и currentEventId
@@ -119,13 +127,19 @@ function onDeleteEvent() {
   const currentEventId = getCurrentEventId();
   if (!currentEventId) return;
 
-  getEvent(currentEventId).then((event) => {
-    if (!checkRulesBeforeDeleteEvent(event)) throw new Error('Нельзя удалять событие раньше чем за 15 мин до начала');
-    return event.id;
-  }).then(result => removeEvent(result)).then(event => {
-    if (!event) return;
-    return [closePopup(), removeEventElementById(event.id)];
-  })
+  getEvent(currentEventId)
+    .then((event) => {
+      if (!checkRulesBeforeDeleteEvent(event))
+        throw new Error(
+          "Нельзя удалять событие раньше чем за 15 мин до начала"
+        );
+      return event.id;
+    })
+    .then((result) => removeEvent(result))
+    .then((event) => {
+      if (!event) return;
+      return [closePopup(), removeEventElementById(event.id)];
+    })
     .catch((error) => alert(error));
 }
 
@@ -134,36 +148,40 @@ const onEditEvent = () => [closePopup(), openModal()];
 const removeEventElementById = (id) => {
   const eventEl = document.querySelector(`.event[data-event-id="${id}"]`);
   return eventEl ? eventEl.remove() : null;
-}
+};
 
 const checkRulesBeforeDeleteEvent = (event) => {
   if (
     moment().format("YYYY-MM-DD HH") ==
-    moment(event.start).format("YYYY-MM-DD HH") &&
+      moment(event.start).format("YYYY-MM-DD HH") &&
     moment().add(15, "minutes").format("YYYY-MM-DD HH:mm") >
-    moment(event.start).format("YYYY-MM-DD HH:mm")
+      moment(event.start).format("YYYY-MM-DD HH:mm")
   ) {
     return false;
   }
   return true;
-}
+};
 
 export const setCurrentEvent = (event) => {
   event.dataset.currentEvent = true;
-}
+};
 
 export const getCurrentEventId = () => {
-  const activeEventElem = document.querySelector('.event[data-current-event="true"]');
-  return activeEventElem ? activeEventElem.getAttribute('data-event-id') : null;
-}
+  const activeEventElem = document.querySelector(
+    '.event[data-current-event="true"]'
+  );
+  return activeEventElem ? activeEventElem.getAttribute("data-event-id") : null;
+};
 
 export const clearCurrentEventElemAndSlot = () => {
-  const activeEventElem = document.querySelector('.event[data-current-event="true"]');
-  if (activeEventElem) activeEventElem.removeAttribute('data-current-event');
+  const activeEventElem = document.querySelector(
+    '.event[data-current-event="true"]'
+  );
+  if (activeEventElem) activeEventElem.removeAttribute("data-current-event");
 
-  const calendarTimeSlot = document.querySelector('[data-slot-date]');
-  if (calendarTimeSlot) calendarTimeSlot.removeAttribute('data-slot-date');
-}
+  const calendarTimeSlot = document.querySelector("[data-slot-date]");
+  if (calendarTimeSlot) calendarTimeSlot.removeAttribute("data-slot-date");
+};
 
 const weekElem = document.querySelector(".calendar__week");
 const deleteEventBtn = document.querySelector(".delete-event-btn");
